@@ -44,7 +44,7 @@ class ProxyGrab:
                 try:
                     site_proxies = set(func(url))
                 except ValueError:
-                    print('URL %s failed' % url)
+                    print(f'URL {url} failed')
                     raise
                 proxies.update(site_proxies)
                 print('got %d proxies from %s, now: %d' % (len(site_proxies), name, len(proxies)))
@@ -58,7 +58,8 @@ def by_linesplit(url):
 def by_json_dicts(host_key, port_key):
     def _by_json_dicts(url):
         for data in requests.get(url).json():
-            yield '%s:%s' % (data[host_key], data[port_key])
+            yield f'{data[host_key]}:{data[port_key]}'
+
     return _by_json_dicts
 
 
@@ -85,21 +86,17 @@ def by_gziputf8split(url):
 def by_xmldom(url):
     xmldoc = minidom.parseString(requests.get(url).text)
     for item in xmldoc.getElementsByTagName('prx:proxy'):
-        yield '%s:%s' % (item.getElementsByTagName('prx:ip')[0].firstChild.nodeValue,
-                         item.getElementsByTagName('prx:port')[0].firstChild.nodeValue)
+        yield f"{item.getElementsByTagName('prx:ip')[0].firstChild.nodeValue}:{item.getElementsByTagName('prx:port')[0].firstChild.nodeValue}"
 
 
 def by_checkerproxy(baseurl):
-    urls = []
-    dates = []
     proxies = []
 
-    for days in range(0, 7):
-        dates.append(datetime.datetime.now() - datetime.timedelta(days=days))
-
-    for date in dates:
-        urls.append(baseurl + date.strftime('%Y-%m-%d'))
-
+    dates = [
+        datetime.datetime.now() - datetime.timedelta(days=days)
+        for days in range(0, 7)
+    ]
+    urls = [baseurl + date.strftime('%Y-%m-%d') for date in dates]
     results = pool.map(by_regex, urls)
 
     for proxy_list in results:

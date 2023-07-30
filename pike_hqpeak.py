@@ -12,9 +12,7 @@ r = requests.get('http://pike.hqpeak.com/api/proxy').json()
 proxies = []
 
 for ip in r:
-    for port in PROXY_PORTS:
-        proxies.append(ip + ':' + str(port))
-
+    proxies.extend(f'{ip}:{str(port)}' for port in PROXY_PORTS)
 print(proxies)
 
 count = 0
@@ -23,10 +21,7 @@ def check_proxy(proxy):
     count += 1
     print(count, len(proxies))
 
-    _proxies = {
-        'http': 'http://' + proxy,
-        'https': 'https://' + proxy
-    }
+    _proxies = {'http': f'http://{proxy}', 'https': f'https://{proxy}'}
     try:
         r = requests.get(TEST_URL, proxies=_proxies, timeout=5)
         return { 'proxy': proxy, 'working': True }
@@ -37,12 +32,7 @@ def check_proxy(proxy):
 
 results = pool.map(check_proxy, proxies)
 
-working = []
-
-for result in results:
-    if result['working']:
-        working.append(result['proxy'])
-
+working = [result['proxy'] for result in results if result['working']]
 with open('working.txt', 'w') as f:
     for proxy in working:
         f.write(proxy + '\n')
