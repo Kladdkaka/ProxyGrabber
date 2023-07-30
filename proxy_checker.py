@@ -18,10 +18,7 @@ def check_proxy(proxy):
     count += 1
     print(count, len(proxies))
 
-    _proxies = {
-        'http': 'http://' + proxy,
-        'https': 'https://' + proxy
-    }
+    _proxies = {'http': f'http://{proxy}', 'https': f'https://{proxy}'}
     try:
         r = requests.get(TEST_URL, proxies=_proxies, timeout=5)
         return { 'proxy': proxy, 'working': True }
@@ -32,12 +29,7 @@ def check_proxy(proxy):
 
 results = pool.map(check_proxy, proxies)
 
-working = []
-
-for result in results:
-    if result['working']:
-        working.append(result['proxy'])
-
+working = [result['proxy'] for result in results if result['working']]
 with open('working.txt', 'w') as f:
     for proxy in working:
         f.write(proxy + '\n')
